@@ -1,0 +1,88 @@
+Permissions:
+    - android.permission.INTERNET
+    - android.permission.ACCESS_NETWORK_STATE
+    - android.permission.ACCESS_WIFI_STATE
+        Device requires internet access to connect to the IoT Foundation
+    - android.permission.WRITE_EXTERNAL_STORAGE
+        Device stores credentials for connecting to IoT Foundation
+    - android.permission.WAKE_LOCK
+        Allow device to remain active while application is running
+    - android.permission.FLASHLIGHT
+        Allow device to enable flashlight when receiving light command messages
+    - android.permission.CAMERA
+        Used for enabling the flashlight
+    - android.permission.ACCESS_COARSE_LOCATION
+    - android.permission.ACCESS_FINE_LOCATION
+        Device requires location services to be able to publish latitude and longitude data
+
+Main Application Handle:
+- IoTStarterApplication
+  Application persistent data stores profiles that each contain 4 properties:
+  - Profile Name - A name for the stored profile. Set by user when saving the profile.
+  - Auth Token - Set by user on login layout
+  - Device ID - Set by user on login layout
+  - Organization ID - Set by user on login layout
+
+  These properties depend on current application state
+  - Connected - Set when MQTT client connected / disconnected
+
+  - Publish Count - Updated on message publish (accel, text, touchmove)
+  - Receive Count - Updated on message arrived (MqttHandler messageArrived callback)
+
+  - Color - Default: Gray, Updated on color message received
+
+Activities:
+- MainActivity: Main activity of the application that provides ActionBar tabs for navigating the application fragments.
+- ProfilesActivity: Activity for managing stored profile settings for the application.
+
+Fragments:
+- IoTStarterFragment: Extends Fragment. Implements the menu for Login, IoT and Draw fragments
+- LoginFragment: Extends IoTStarterFragment. This is the first page that is displayed when launching the application.
+- IoTFragment: Extends IoTStarterFragment. Displays info about the connection and sensor data.
+- LogFragment: Extends ListFragment. Displays the list of received text and alert messages.
+- DrawFragment: Extends IoTStarterFragment. Creates the drawing view for creating touchmove messages.
+
+Views:
+- DrawingView - Part of Draw Fragment, background color based on IoTStarterApplication Color property, allows for
+                sending of touchmove messages.
+
+Utils:
+- MqttHandler - Perform all MQTT related actions. Send connection loss intents to Login Fragment and message arrived
+                intents to IoT Fragment.
+- ActionListener - Process results of MQTT API calls, send connection intents to Login Fragment and message publish
+                intents to IoT Fragment.
+- MessageConductor - Process received messages, send color intents to IoT Fragment, send text intents to Log Fragment,
+                send alert intents to the active fragment.
+- TopicFactory - Generate command and event topic strings.
+- MessageFactory - Generate message data for publishing to IoT.
+- DeviceSensor - Handle device sensors for accelerometer, magnetometer, orientation
+- IoTProfile - Stores application connection settings.
+- LocationUtils - Gets latitude and longitude for including in accel messages.
+
+Intents:
+- INTENT_LOGIN - LoginFragment
+- INTENT_IOT   - IoTFragment
+- INTENT_LOG   - LogFragment
+- INTENT_PROFILES - ProfilesActivity
+
+  The following are sent to LoginActivity by MqttHandler
+  - INTENT_DATA_CONNECT - mqtt client connected
+  - INTENT_DATA_DISCONNECT - mqtt client disconnected
+
+  The following are sent to IoTActivity by MqttHandler
+  - INTENT_DATA_PUBLISHED - message published
+  - INTENT_DATA_RECEIVED - message received
+
+  The following are sent to IoTActivity by MessageConductor
+  - COLOR_EVENT - color message was received
+  - ALERT_EVENT - alert message was received
+
+  The following are sent to LogActivity by MessageConductor
+  - TEXT_EVENT - text message was received
+  - ALERT_EVENT - alert message was received
+
+  The following are sent to LoginActivity by MessageConductor
+  - ALERT_EVENT - alert message was received
+
+  The following are sent to IoTActivity by DeviceSensor
+  - ACCEL_EVENT - accel data updated
